@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { ToastProvider } from './components/Toast/Toast';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import PrivateRoute from './components/auth/PrivateRoute';
@@ -23,10 +24,11 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <div className="app">
-            <Header />
-            <main className="main-content">
-              <Routes>
+          <ToastProvider>
+            <div className="app">
+              <Header />
+              <main className="main-content">
+                <Routes>
                 {/* Ruta principal - RF1: Home */}
                 <Route path="/" element={<Home />} />
 
@@ -69,6 +71,7 @@ function App() {
             </main>
             <Footer />
           </div>
+          </ToastProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

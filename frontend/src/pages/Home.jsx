@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productoService, servicioService } from '../services';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../components/Toast/Toast';
 import './Home.css';
 
 const Home = () => {
@@ -9,6 +10,7 @@ const Home = () => {
   const [serviciosDestacados, setServiciosDestacados] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, isInCart } = useCart();
+  const { success } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,7 +33,11 @@ const Home = () => {
   }, []);
 
   const handleAddToCart = (item, type) => {
-    addToCart(item, type);
+    const added = addToCart(item, type);
+    if (added) {
+      const itemType = type === 'producto' ? 'Producto' : 'Servicio';
+      success(`${itemType} "${item.nombre}" agregado al carrito`);
+    }
   };
 
   if (loading) {

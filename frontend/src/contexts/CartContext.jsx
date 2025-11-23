@@ -40,6 +40,8 @@ export const CartProvider = ({ children }) => {
         return [...prevCart, { ...item, cantidad: 1, type }];
       }
     });
+    
+    return true; // Retornar éxito para poder mostrar notificación
   };
 
   // Remover item del carrito
@@ -88,6 +90,12 @@ export const CartProvider = ({ children }) => {
     return cart.some((item) => item.id === itemId && item.type === type);
   };
 
+  // Obtener cantidad de un item específico
+  const getItemQuantity = (itemId, type) => {
+    const item = cart.find((item) => item.id === itemId && item.type === type);
+    return item ? item.cantidad : 0;
+  };
+
   const value = {
     cart,
     addToCart,
@@ -97,6 +105,7 @@ export const CartProvider = ({ children }) => {
     getTotalItems,
     getTotalPrice,
     isInCart,
+    getItemQuantity,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
