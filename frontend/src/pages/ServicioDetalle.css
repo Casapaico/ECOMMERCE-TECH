@@ -1,0 +1,377 @@
+.servicio-detalle-page {
+  padding: 2rem 0;
+  min-height: calc(100vh - 200px);
+}
+
+.servicio-detalle {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+/* Columna Visual */
+.servicio-visual {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+}
+
+.servicio-icon-large {
+  font-size: 8rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.servicio-imagen {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.servicio-imagen img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.quick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.info-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.info-content h4 {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.info-content p {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3561;
+  margin: 0;
+}
+
+/* Columna Info */
+.servicio-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.servicio-tipo-badge {
+  display: inline-block;
+  background-color: #764ba2;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.servicio-title {
+  font-size: 2.5rem;
+  color: #2d3561;
+  margin: 0;
+}
+
+.badge-destacado {
+  display: inline-block;
+  background-color: #ffc107;
+  color: #000;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Precio Section */
+.servicio-precio-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 16px;
+}
+
+.precio-cotizar .precio-label {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.precio-cotizar .precio-note {
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.precio-fijo {
+  text-align: center;
+}
+
+.precio-desde {
+  display: block;
+  font-size: 0.95rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.precio-valor {
+  display: block;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+/* Acciones */
+.servicio-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-cart,
+.btn-solicitar {
+  flex: 1;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cart {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-cart:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.btn-cart.added {
+  background-color: #6c757d;
+}
+
+.btn-cart:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-solicitar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-solicitar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Secciones */
+.servicio-descripcion,
+.servicio-requisitos,
+.servicio-proceso,
+.servicio-ventajas {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.servicio-descripcion h3,
+.servicio-requisitos h3,
+.servicio-proceso h3,
+.servicio-ventajas h3 {
+  color: #2d3561;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.servicio-descripcion p,
+.servicio-requisitos p {
+  color: #666;
+  line-height: 1.8;
+  font-size: 1.05rem;
+  white-space: pre-wrap;
+}
+
+/* Proceso Steps */
+.proceso-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.step {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-content h4 {
+  color: #2d3561;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.step-content p {
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Ventajas */
+.servicio-ventajas ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.servicio-ventajas li {
+  color: #666;
+  font-size: 1.05rem;
+  padding-left: 0.5rem;
+}
+
+/* Botón Volver */
+.back-button-container {
+  text-align: center;
+}
+
+.btn-back {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  background-color: #667eea;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  background-color: #5568d3;
+  transform: translateY(-2px);
+}
+
+/* Loading y Error */
+.loading-container,
+.error-container {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  font-size: 1.5rem;
+  color: #667eea;
+}
+
+.error-container h2 {
+  color: #dc3545;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .servicio-detalle {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .servicio-visual {
+    position: relative;
+    top: 0;
+  }
+
+  .servicio-icon-large {
+    font-size: 6rem;
+  }
+
+  .servicio-title {
+    font-size: 2rem;
+  }
+
+  .servicio-actions {
+    flex-direction: column;
+  }
+
+  .quick-info {
+    flex-direction: row;
+  }
+
+  .info-card {
+    flex: 1;
+  }
+}
+
+@media (max-width: 576px) {
+  .servicio-icon-large {
+    font-size: 4rem;
+  }
+
+  .servicio-title {
+    font-size: 1.5rem;
+  }
+
+  .precio-valor {
+    font-size: 2rem;
+  }
+
+  .quick-info {
+    flex-direction: column;
+  }
+
+  .step {
+    flex-direction: column;
+  }
+
+  .step-number {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+}
