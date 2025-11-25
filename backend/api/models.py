@@ -109,3 +109,172 @@ class Perfil(models.Model):
     
     def __str__(self):
         return f"Perfil de {self.user.username}"
+
+# CAMBIOS A PARTIR DE AQUÍ========================================================================================
+
+# Modelo de Promoción (Marketing)
+class Promocion(models.Model):
+    TIPO_DESCUENTO_CHOICES = [
+        ('porcentaje', 'Porcentaje'),
+        ('monto_fijo', 'Monto Fijo'),
+    ]
+    
+    codigo = models.CharField(max_length=50, unique=True, help_text="Código de la promoción")
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    tipo_descuento = models.CharField(max_length=20, choices=TIPO_DESCUENTO_CHOICES, default='porcentaje')
+    valor_descuento = models.DecimalField(max_digits=10, decimal_places=2, help_text="Porcentaje (0-100) o monto fijo")
+    
+    # Aplicable a
+    productos = models.ManyToManyField(Producto, blank=True, related_name='promociones')
+    servicios = models.ManyToManyField(Servicio, blank=True, related_name='promociones')
+    aplica_todo = models.BooleanField(default=False, help_text="Aplica a todos los productos/servicios")
+    
+    # Restricciones
+    monto_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Monto mínimo de compra")
+    usos_maximos = models.IntegerField(default=0, help_text="0 = ilimitado")
+    usos_actuales = models.IntegerField(default=0)
+    
+    # Vigencia
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField()
+    activo = models.BooleanField(default=True)
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Promoción'
+        verbose_name_plural = 'Promociones'
+        ordering = ['-fecha_creacion']
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.nombre}"
+    
+    def esta_vigente(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return self.activo and self.fecha_inicio <= now <= self.fecha_fin
+    
+    def puede_usar(self):
+        if self.usos_maximos == 0:
+            return True
+        return self.usos_actuales < self.usos_maximos
+
+
+# Modelo de Carrito
+class Carrito(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='carrito')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Carrito de {self.user.username}"
+    
+    def get_total(self):
+        items = self.items.all()
+        return sum(item.get_subtotal() for item in items)
+    
+    def get_total_items(self):
+        return sum(item.cantidad for item in self.items.all())
+
+
+# Modelo de Item del Carrito
+class ItemCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name='items')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
+    servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, null=True, blank=True)
+    cantidad = models.IntegerField(default=1)
+    fecha_agregado = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Item del Carrito'
+        verbose_name_plural = 'Items del Carrito'
+        unique_together = [['carrito', 'producto'], ['carrito', 'servicio']]
+    
+    def __str__(self):
+        item_name = self.producto.nombre if self.producto else self.servicio.nombre
+        return f"{self.cantidad}x {item_name}"
+    
+    def get_precio_unitario(self):
+        if self.producto:
+            return self.producto.precio
+        elif self.servicio:
+            return self.servicio.precio_base or 0
+        return 0
+    
+    def get_subtotal(self):
+        return self.get_precio_unitario() * self.cantidad
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        # Validar que tenga producto O servicio, no ambos ni ninguno
+        if not self.producto and not self.servicio:
+            raise ValidationError("Debe especificar un producto o un servicio")
+        if self.producto and self.servicio:
+            raise ValidationError("No puede tener producto y servicio al mismo tiempo")
+        
+        # Validar stock si es producto
+        if self.producto and self.cantidad > self.producto.stock:
+            raise ValidationError(f"Stock insuficiente. Disponible: {self.producto.stock}")
+
+
+# Modelo de Recomendación (Sistema de recomendación simple)
+class Recomendacion(models.Model):
+    producto_origen = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='recomendaciones_desde', null=True, blank=True)
+    servicio_origen = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='recomendaciones_desde', null=True, blank=True)
+    
+    producto_recomendado = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='recomendaciones_hacia', null=True, blank=True)
+    servicio_recomendado = models.ForeignKey(Servicio, on_delete=models.CASCADE, related_name='recomendaciones_hacia', null=True, blank=True)
+    
+    score = models.IntegerField(default=1, help_text="Mayor score = mayor relevancia")
+    motivo = models.CharField(max_length=200, help_text="Ej: Complementario, Similar, Popular")
+    activo = models.BooleanField(default=True)
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Recomendación'
+        verbose_name_plural = 'Recomendaciones'
+        ordering = ['-score', '-fecha_creacion']
+    
+    def __str__(self):
+        origen = self.producto_origen or self.servicio_origen
+        destino = self.producto_recomendado or self.servicio_recomendado
+        return f"{origen} → {destino}"
+
+
+# Modelo de Análisis de Comportamiento (para mejorar recomendaciones)
+class EventoUsuario(models.Model):
+    TIPO_EVENTO_CHOICES = [
+        ('view', 'Visualización'),
+        ('cart_add', 'Agregar al Carrito'),
+        ('cart_remove', 'Remover del Carrito'),
+        ('purchase', 'Compra'),
+        ('search', 'Búsqueda'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.CharField(max_length=100, help_text="Para usuarios no autenticados")
+    tipo_evento = models.CharField(max_length=20, choices=TIPO_EVENTO_CHOICES)
+    
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
+    servicio = models.ForeignKey(Servicio, on_delete=models.CASCADE, null=True, blank=True)
+    
+    metadata = models.JSONField(null=True, blank=True, help_text="Datos adicionales del evento")
+    fecha_evento = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Evento de Usuario'
+        verbose_name_plural = 'Eventos de Usuario'
+        ordering = ['-fecha_evento']
+        indexes = [
+            models.Index(fields=['user', 'tipo_evento']),
+            models.Index(fields=['session_id', 'tipo_evento']),
+        ]
+    
+    def __str__(self):
+        usuario = self.user.username if self.user else f"Session {self.session_id[:8]}"
+        item = self.producto or self.servicio
+        return f"{usuario} - {self.get_tipo_evento_display()} - {item}"
+    
+# FIN CAMBIOS ========================================================================================
