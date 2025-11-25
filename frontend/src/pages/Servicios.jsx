@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { servicioService, categoriaService } from '../services';
 import { useCart } from '../contexts/CartContext';
+import { usePrefetchServicio } from '../hooks/useServicios.js';
 import './Servicios.css';
 
 const Servicios = () => {
@@ -11,6 +12,7 @@ const Servicios = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   const { addToCart, isInCart } = useCart();
+  const prefetchServicio = usePrefetchServicio();
 
   const categoriaFiltro = searchParams.get('categoria') || '';
   const tipoServicioFiltro = searchParams.get('tipo_servicio') || '';
@@ -269,7 +271,11 @@ const Servicios = () => {
 
                 <div className="servicios-grid">
                   {servicios.map((servicio) => (
-                    <div key={servicio.id} className="servicio-card">
+                    <div 
+                      key={servicio.id} 
+                      className="servicio-card"
+                      onMouseEnter={() => prefetchServicio(servicio.id)}
+                    >
                       <div className="servicio-icon">
                         {getIconoServicio(servicio.tipo_servicio)}
                       </div>

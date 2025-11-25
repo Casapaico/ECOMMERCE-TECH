@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { servicioService } from '../services';
 import { useCart } from '../contexts/CartContext';
+import Recomendaciones from '../components/recomendaciones/Recomendaciones';
 import './ServicioDetalle.css';
 
 const ServicioDetalle = () => {
@@ -258,6 +259,9 @@ const ServicioDetalle = () => {
             ← Volver a Servicios
           </Link>
         </div>
+
+        {/* Recomendaciones */}
+        <Recomendaciones servicioId={id} tipo="servicio" />
       </div>
     </div>
   );

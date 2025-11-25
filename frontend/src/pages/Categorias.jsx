@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { categoriaService } from '../services';
+import { usePrefetchCategoria } from '../hooks/useCategorias';
 import './Categorias.css';
 
 const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const prefetchCategoria = usePrefetchCategoria();
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -125,8 +127,9 @@ const Categorias = () => {
                 <div className="categoria-actions">
                   {categoria.total_productos > 0 && (
                     <Link
-                      to={`/productos?categoria=${categoria.id}`}
+                      to={`/categorias/${categoria.id}/productos`}
                       className="btn-categoria btn-productos"
+                      onMouseEnter={() => prefetchCategoria(categoria.id)}
                     >
                       <span>📦</span>
                       Ver Productos

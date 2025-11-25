@@ -1,37 +1,99 @@
-import { Link } from 'react-router-dom';
-import { useCart } from '../contexts/CartContext';
-import './Carrito.css';
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useCart } from '../hooks/useCart'
+import { useToast } from '../components/Toast/Toast'
+import PromocionInput from '../components/promociones/PromocionInput'
+import Recomendaciones from '../components/recomendaciones/Recomendaciones'
+import './Carrito.css'
 
 const Carrito = () => {
+  const navigate = useNavigate()
+  const { success, error: showError } = useToast()
   const {
     cart,
-    removeFromCart,
+    isLoading,
     updateQuantity,
+    removeItem,
     clearCart,
-    getTotalItems,
-    getTotalPrice,
-  } = useCart();
+    isUpdating,
+    isRemoving,
+  } = useCart()
 
-  const handleQuantityChange = (itemId, type, newQuantity) => {
-    const quantity = parseInt(newQuantity);
-    if (quantity > 0) {
-      updateQuantity(itemId, type, quantity);
-    }
-  };
+  const [promocion, setPromocion] = useState(null)
 
-  const handleRemove = (itemId, type) => {
-    if (window.confirm('¿Eliminar este item del carrito?')) {
-      removeFromCart(itemId, type);
+  // Calcular descuento
+  const calcularDescuento = () => {
+    if (!promocion) return 0
+    
+    const total = parseFloat(cart.total || 0)
+    
+    // Validar monto mínimo
+    if (total < parseFloat(promocion.monto_minimo || 0)) {
+      return 0
     }
-  };
+    
+    if (promocion.tipo_descuento === 'porcentaje') {
+      return (total * parseFloat(promocion.valor_descuento) / 100).toFixed(2)
+    } else {
+      return Math.min(parseFloat(promocion.valor_descuento), total).toFixed(2)
+    }
+  }
+
+  const descuento = calcularDescuento()
+  const totalConDescuento = (parseFloat(cart.total || 0) - parseFloat(descuento)).toFixed(2)
+
+  const handleUpdateQuantity = (itemId, newQuantity) => {
+    if (newQuantity < 1) return
+    
+    updateQuantity(
+      { item_id: itemId, cantidad: newQuantity },
+      {
+        onSuccess: () => {
+          success('Cantidad actualizada')
+        },
+        onError: (err) => {
+          showError(err.response?.data?.error || 'Error al actualizar')
+        },
+      }
+    )
+  }
+
+  const handleRemoveItem = (itemId) => {
+    if (!window.confirm('¿Eliminar este item del carrito?')) return
+
+    removeItem(itemId, {
+      onSuccess: () => {
+        success('Item eliminado del carrito')
+      },
+      onError: (err) => {
+        showError(err.response?.data?.error || 'Error al eliminar')
+      },
+    })
+  }
 
   const handleClearCart = () => {
-    if (window.confirm('¿Vaciar todo el carrito?')) {
-      clearCart();
-    }
-  };
+    if (!window.confirm('¿Vaciar todo el carrito?')) return
 
-  if (cart.length === 0) {
+    clearCart(undefined, {
+      onSuccess: () => {
+        success('Carrito vaciado')
+        setPromocion(null)
+      },
+      onError: (err) => {
+        showError('Error al vaciar el carrito')
+      },
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="carrito-container">
+        <div className="loading">Cargando carrito...</div>
+      </div>
+    )
+  }
+
+  if (!cart.items || cart.items.length === 0) {
     return (
       <div className="carrito-empty">
         <div className="empty-content">
@@ -56,163 +118,177 @@ const Carrito = () => {
       <div className="container">
         <div className="carrito-header">
           <h1>🛒 Mi Carrito</h1>
-          <button onClick={handleClearCart} className="btn-clear">
-            Vaciar Carrito
+          <button onClick={handleClearCart} className="btn-clear-cart">
+            🗑️ Vaciar Carrito
           </button>
         </div>
 
         <div className="carrito-content">
-          {/* Lista de Items */}
           <div className="carrito-items">
-            {cart.map((item) => {
-              const precio = item.precio || item.precio_base || 0;
-              const isServicio = item.type === 'servicio';
+            {cart.items.map((item) => {
+              const detalle = item.producto_detalle || item.servicio_detalle
+              const tipo = detalle?.tipo
 
               return (
-                <div key={`${item.type}-${item.id}`} className="carrito-item">
-                  {/* Imagen */}
-                  <div className="item-image">
-                    {item.imagen_principal ? (
-                      <img
-                        src={`http://localhost:8000${item.imagen_principal}`}
-                        alt={item.nombre}
-                      />
+                <div key={item.id} className="carrito-item">
+                  <div className="carrito-item-imagen">
+                    {detalle?.imagen ? (
+                      <img src={detalle.imagen} alt={detalle.nombre} />
                     ) : (
-                      <div className="no-image">
-                        {isServicio ? '🛠️' : '📦'}
+                      <div className="imagen-placeholder">
+                        {tipo === 'producto' ? '📦' : '🛠️'}
                       </div>
                     )}
                   </div>
 
-                  {/* Info */}
-                  <div className="item-info">
-                    <div className="item-type">
-                      {isServicio ? '🛠️ Servicio' : '📦 Producto'}
-                    </div>
-                    <h3 className="item-name">{item.nombre}</h3>
-                    <p className="item-description">
-                      {item.descripcion?.substring(0, 100)}...
-                    </p>
-                    
-                    {isServicio && item.tiempo_estimado_dias && (
-                      <p className="item-time">
-                        ⏱️ Tiempo estimado: {item.tiempo_estimado_dias} días
+                  <div className="carrito-item-info">
+                    <h3>{detalle?.nombre || 'Cargando...'}</h3>
+                    <span className="carrito-item-tipo">
+                      {tipo === 'producto' ? '📦 Producto' : '🛠️ Servicio'}
+                    </span>
+                    {item.producto_detalle && (
+                      <p className="carrito-item-meta">
+                        Stock: {item.producto_detalle.stock} | 
+                        Licencia: {item.producto_detalle.tipo_licencia}
                       </p>
                     )}
-
-                    {!isServicio && item.tipo_licencia && (
-                      <p className="item-license">
-                        Licencia: {item.tipo_licencia}
+                    {item.servicio_detalle && (
+                      <p className="carrito-item-meta">
+                        ⏱️ Tiempo estimado: {item.servicio_detalle.tiempo_estimado} días
                       </p>
                     )}
                   </div>
 
-                  {/* Cantidad */}
-                  <div className="item-quantity">
-                    <label>Cantidad:</label>
-                    <div className="quantity-controls">
-                      <button
-                        onClick={() =>
-                          updateQuantity(item.id, item.type, item.cantidad - 1)
-                        }
-                        disabled={item.cantidad <= 1}
-                      >
-                        -
-                      </button>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.cantidad}
-                        onChange={(e) =>
-                          handleQuantityChange(item.id, item.type, e.target.value)
-                        }
-                      />
-                      <button
-                        onClick={() =>
-                          updateQuantity(item.id, item.type, item.cantidad + 1)
-                        }
-                      >
-                        +
-                      </button>
-                    </div>
+                  <div className="carrito-item-cantidad">
+                    <button
+                      onClick={() => handleUpdateQuantity(item.id, item.cantidad - 1)}
+                      disabled={item.cantidad <= 1 || isUpdating}
+                      className="btn-cantidad"
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      value={item.cantidad}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value)
+                        if (val > 0) handleUpdateQuantity(item.id, val)
+                      }}
+                      min="1"
+                      disabled={isUpdating}
+                    />
+                    <button
+                      onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
+                      disabled={isUpdating}
+                      className="btn-cantidad"
+                    >
+                      +
+                    </button>
                   </div>
 
-                  {/* Precio */}
-                  <div className="item-price">
-                    <div className="price-unit">
-                      ${parseFloat(precio).toFixed(2)}
-                    </div>
-                    <div className="price-total">
-                      ${(parseFloat(precio) * item.cantidad).toFixed(2)}
-                    </div>
+                  <div className="carrito-item-precio">
+                    <p className="precio-unitario">${item.precio_unitario}</p>
+                    <p className="subtotal">${item.subtotal}</p>
                   </div>
 
-                  {/* Eliminar */}
                   <button
-                    onClick={() => handleRemove(item.id, item.type)}
-                    className="btn-remove"
+                    onClick={() => handleRemoveItem(item.id)}
+                    disabled={isRemoving}
+                    className="btn-eliminar"
                     title="Eliminar"
                   >
-                    🗑️
+                    ✕
                   </button>
                 </div>
-              );
+              )
             })}
           </div>
 
-          {/* Resumen */}
-          <div className="carrito-summary">
-            <h2>Resumen del Pedido</h2>
+          <div className="carrito-resumen">
+            <div className="resumen-card">
+              <h2>Resumen del Pedido</h2>
+              
+              <div className="resumen-linea">
+                <span>Items:</span>
+                <span>{cart.total_items}</span>
+              </div>
 
-            <div className="summary-line">
-              <span>Total de items:</span>
-              <strong>{getTotalItems()}</strong>
-            </div>
+              <div className="resumen-linea">
+                <span>Subtotal:</span>
+                <span>${cart.total}</span>
+              </div>
 
-            <div className="summary-line">
-              <span>Subtotal:</span>
-              <strong>${getTotalPrice().toFixed(2)}</strong>
-            </div>
+              {/* Componente de Promoción */}
+              <PromocionInput 
+                onPromocionAplicada={setPromocion} 
+                totalCarrito={cart.total || 0}
+              />
 
-            <div className="summary-line highlight">
-              <span>Total:</span>
-              <strong className="total-price">
-                ${getTotalPrice().toFixed(2)}
-              </strong>
-            </div>
+              {promocion && descuento > 0 && (
+                <>
+                  {parseFloat(cart.total) < parseFloat(promocion.monto_minimo) ? (
+                    <div className="promocion-advertencia">
+                      ⚠️ Monto mínimo: ${promocion.monto_minimo}
+                    </div>
+                  ) : (
+                    <div className="resumen-linea descuento">
+                      <span>🎉 Descuento ({promocion.codigo}):</span>
+                      <span className="descuento-valor">-${descuento}</span>
+                    </div>
+                  )}
+                </>
+              )}
 
-            <div className="summary-actions">
-              <button className="btn-checkout" disabled>
-                Proceder al Pago
+              <div className="resumen-linea total">
+                <span>Total:</span>
+                <span>${promocion && descuento > 0 && parseFloat(cart.total) >= parseFloat(promocion.monto_minimo) ? totalConDescuento : cart.total}</span>
+              </div>
+
+              <button className="btn btn-primary btn-block btn-checkout" disabled>
+                💳 Proceder al Pago
+                <br />
+                <small>(Próximamente)</small>
               </button>
-              <p className="checkout-note">
-                * El proceso de pago estará disponible en la próxima fase
-              </p>
-            </div>
 
-            <div className="continue-shopping">
-              <Link to="/productos" className="link">
-                ← Continuar comprando
+              <Link to="/productos" className="btn btn-secondary-outline btn-block">
+                ← Continuar Comprando
               </Link>
             </div>
+
+            <div className="info-boxes">
+              <div className="info-box">
+                <span>🔒</span>
+                <p>Compra Segura</p>
+              </div>
+              <div className="info-box">
+                <span>💳</span>
+                <p>Múltiples Métodos de Pago</p>
+              </div>
+              <div className="info-box">
+                <span>📞</span>
+                <p>Soporte 24/7</p>
+              </div>
+            </div>
+
+            {/* Códigos de promoción disponibles */}
+            <div className="promociones-disponibles">
+              <h3>🎁 Promociones Disponibles</h3>
+              <ul>
+                <li><strong>BLACKFRIDAY2024</strong> - 25% desc. (Min. $1000)</li>
+                <li><strong>NUEVO2024</strong> - 15% desc. (Min. $500)</li>
+                <li><strong>AHORRA200</strong> - $200 desc. (Min. $3000)</li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Información adicional */}
-        <div className="carrito-info">
-          <div className="info-box">
-            <h3>🔒 Compra Segura</h3>
-            <p>Todas las transacciones están protegidas y encriptadas</p>
-          </div>
-          <div className="info-box">
-            <h3>💳 Métodos de Pago</h3>
-            <p>Aceptamos tarjetas de crédito, débito y transferencias</p>
-          </div>
-          <div className="info-box">
-            <h3>📧 Soporte</h3>
-            <p>¿Necesitas ayuda? Contáctanos en soporte@techstore.com</p>
-          </div>
-        </div>
+        {/* Recomendaciones basadas en el carrito */}
+        {cart.items.length > 0 && cart.items[0].producto && (
+          <Recomendaciones 
+            productoId={cart.items[0].producto} 
+            tipo="producto" 
+          />
+        )}
       </div>
     </div>
   );

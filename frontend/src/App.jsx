@@ -26,6 +26,7 @@ import Categorias from './pages/Categorias';
 import Carrito from './pages/Carrito';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProductosPorCategoria from './pages/ProductosPorCategoria';
 
 import './App.css';
 
@@ -70,6 +71,8 @@ function App() {
                 {/* Rutas de autenticación - RF4: Login y Registro */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+
+                <Route path="/categorias/:categoriaId/productos" element={<ProductosPorCategoria />} />
 
                 {/* Ruta del carrito - RF3: Carrito (protegida) */}
                 <Route

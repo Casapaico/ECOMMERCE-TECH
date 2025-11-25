@@ -2,11 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { productoService, categoriaService } from '../services';
 import { useCart } from '../contexts/CartContext';
+import { usePrefetchProduct } from '../hooks/useProducts';
 import './Productos.css';
-
-// En cualquier componente que muestre productos
-import { usePrefetchProduct } from '../hooks/useProducts'
-
 
 const Productos = () => {
   const [productos, setProductos] = useState([]);
@@ -15,6 +12,7 @@ const Productos = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   
   const { addToCart, isInCart } = useCart();
+  const prefetchProduct = usePrefetchProduct();
 
   // Obtener filtros de la URL
   const categoriaFiltro = searchParams.get('categoria') || '';
@@ -241,9 +239,11 @@ const Productos = () => {
 
                 <div className="productos-grid">
                   {productos.map((producto) => (
-                    <div key={producto.id} 
-                         className="producto-card"
-                         onMouseEnter={() => prefetchProduct(producto.id)}>
+                    <div 
+                      key={producto.id} 
+                      className="producto-card"
+                      onMouseEnter={() => prefetchProduct(producto.id)}
+                    >
                       <Link to={`/productos/${producto.id}`} className="producto-image">
                         {producto.imagen_principal ? (
                           <img

@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { productoService, servicioService } from '../services';
 import { useCart } from '../contexts/CartContext';
 import { useToast } from '../components/Toast/Toast';
+import { usePrefetchProduct } from '../hooks/useProducts';
+import { usePrefetchServicio } from '../hooks/useServicios.js';
+import BannerPromociones from '../components/promociones/BannerPromociones';
 import './Home.css';
 
 const Home = () => {
@@ -11,6 +14,8 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const { addToCart, isInCart } = useCart();
   const { success } = useToast();
+  const prefetchProduct = usePrefetchProduct();
+  const prefetchServicio = usePrefetchServicio();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,6 +67,11 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Banner de Promociones */}
+      <div className="container">
+        <BannerPromociones />
+      </div>
+
       {/* Productos Destacados */}
       <section className="section">
         <div className="container">
@@ -74,10 +84,11 @@ const Home = () => {
 
           <div className="products-grid">
             {productosDestacados.map((producto) => (
-              <div key={producto.id} 
-                   className="product-card"
-                   onMouseEnter={() => prefetchProduct(producto.id)}>
-                   
+              <div 
+                key={producto.id} 
+                className="product-card"
+                onMouseEnter={() => prefetchProduct(producto.id)}
+              >
                 <div className="product-image">
                   {producto.imagen_principal ? (
                     <img
@@ -140,7 +151,11 @@ const Home = () => {
 
           <div className="services-grid">
             {serviciosDestacados.map((servicio) => (
-              <div key={servicio.id} className="service-card">
+              <div 
+                key={servicio.id} 
+                className="service-card"
+                onMouseEnter={() => prefetchServicio(servicio.id)}
+              >
                 <div className="service-icon">
                   {servicio.tipo_servicio_display === 'Chatbot' && '🤖'}
                   {servicio.tipo_servicio_display === 'Desarrollo Web' && '🌐'}
