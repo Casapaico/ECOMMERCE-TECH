@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProductById } from '../hooks/useProducts';
-import { useCart as useCartRQ } from '../hooks/useCart';
+import { useCartRQ } from '../hooks/useCart';
 import { useToast } from '../components/Toast/Toast';
 import Recomendaciones from '../components/recomendaciones/Recomendaciones';
 import './ProductoDetalle.css';
@@ -53,9 +53,6 @@ const ProductoDetalle = () => {
       }
     );
   };
-  
-  // Verificar si está en el carrito
-  const isInCart = cart?.items?.some(item => item.producto === parseInt(id));
 
   if (loading) {
     return (
@@ -166,21 +163,17 @@ const ProductoDetalle = () => {
             <div className="producto-actions">
               {producto.stock > 0 ? (
                 <>
-                  {isInCart(producto.id, 'producto') ? (
-                    <button className="btn-cart added" disabled>
-                      ✓ En el Carrito
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn-cart"
-                      onClick={handleAddToCart}
-                    >
-                      🛒 Agregar al Carrito
-                    </button>
-                  )}
+                  <button 
+                    className="btn-cart"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    {isAddingToCart ? 'Agregando...' : '🛒 Agregar al Carrito'}
+                  </button>
                   <button 
                     className="btn-buy"
                     onClick={handleBuyNow}
+                    disabled={isAddingToCart}
                   >
                     Comprar Ahora
                   </button>

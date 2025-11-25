@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
 import api from '../services/api'
 
-export const useCart = () => {
+export const useCartRQ = () => {
   const { isAuthenticated } = useAuth()
   const queryClient = useQueryClient()
 

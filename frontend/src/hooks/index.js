@@ -5,7 +5,7 @@
 
 // Hooks de Carrito
 export {
-  useCart,
+  useCartRQ,
 } from './useCart'
 
 // Hooks de Productos

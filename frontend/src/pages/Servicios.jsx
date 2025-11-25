@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { servicioService, categoriaService } from '../services';
-import { useCart } from '../contexts/CartContext';
-import { usePrefetchServicio } from '../hooks/useServicios.js';
+import { useCartRQ } from '../hooks/useCart';
+import { useToast } from '../components/Toast/Toast';
+import { usePrefetchServicio } from '../hooks/useServicios';
 import './Servicios.css';
 
 const Servicios = () => {
@@ -11,7 +12,8 @@ const Servicios = () => {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const { addToCart, isInCart } = useCart();
+  const { addToCart, isAddingToCart } = useCartRQ();
+  const { success, error: showError } = useToast();
   const prefetchServicio = usePrefetchServicio();
 
   const categoriaFiltro = searchParams.get('categoria') || '';
@@ -84,7 +86,17 @@ const Servicios = () => {
   };
 
   const handleAddToCart = (servicio) => {
-    addToCart(servicio, 'servicio');
+    addToCart(
+      { servicio: servicio.id, cantidad: 1 },
+      {
+        onSuccess: () => {
+          success(`${servicio.nombre} agregado al carrito`);
+        },
+        onError: (err) => {
+          showError(err.response?.data?.error || 'Error al agregar al carrito');
+        }
+      }
+    );
   };
 
   const getIconoServicio = (tipo) => {
@@ -320,13 +332,10 @@ const Servicios = () => {
                         </Link>
                         <button
                           onClick={() => handleAddToCart(servicio)}
-                          className={`btn-cart ${
-                            isInCart(servicio.id, 'servicio') ? 'in-cart' : ''
-                          }`}
+                          disabled={isAddingToCart}
+                          className="btn-cart"
                         >
-                          {isInCart(servicio.id, 'servicio')
-                            ? '✓ En carrito'
-                            : '🛒 Solicitar'}
+                          {isAddingToCart ? 'Agregando...' : '🛒 Solicitar'}
                         </button>
                       </div>
                     </div>

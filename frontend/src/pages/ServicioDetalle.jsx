@@ -4,6 +4,7 @@ import { servicioService } from '../services';
 import { useCart } from '../contexts/CartContext';
 import Recomendaciones from '../components/recomendaciones/Recomendaciones';
 import './ServicioDetalle.css';
+import { useToast } from '../components/Toast/Toast';
 
 const ServicioDetalle = () => {
   const { id } = useParams();
@@ -32,8 +33,18 @@ const ServicioDetalle = () => {
   }, [id]);
 
   const handleAddToCart = () => {
-    addToCart(servicio, 'servicio');
-  };
+  addToCart(
+    { servicio: parseInt(id), cantidad: 1 },
+    {
+      onSuccess: () => {
+        success(`${servicio.nombre} agregado al carrito`);
+      },
+      onError: (err) => {
+        showError(err.response?.data?.error || 'Error al agregar al carrito');
+      }
+    }
+  );
+};
 
   const handleSolicitarNow = () => {
     addToCart(servicio, 'servicio');

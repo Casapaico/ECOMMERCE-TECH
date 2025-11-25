@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useCart } from '../hooks/useCart'
+import { useCartRQ } from '../hooks/useCart'
 import { useToast } from '../components/Toast/Toast'
 import PromocionInput from '../components/promociones/PromocionInput'
 import Recomendaciones from '../components/recomendaciones/Recomendaciones'
@@ -17,7 +17,7 @@ const Carrito = () => {
     clearCart,
     isUpdating,
     isRemoving,
-  } = useCart()
+  } = useCartRQ()
 
   const [promocion, setPromocion] = useState(null)
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { productoService, servicioService } from '../services';
-import { useCart } from '../contexts/CartContext';
+import { useCartRQ } from '../hooks/useCart';
 import { useToast } from '../components/Toast/Toast';
 import { usePrefetchProduct } from '../hooks/useProducts';
-import { usePrefetchServicio } from '../hooks/useServicios.js';
+import { usePrefetchServicio } from '../hooks/useServicios';
 import BannerPromociones from '../components/promociones/BannerPromociones';
 import './Home.css';
 
@@ -12,8 +12,8 @@ const Home = () => {
   const [productosDestacados, setProductosDestacados] = useState([]);
   const [serviciosDestacados, setServiciosDestacados] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { addToCart, isInCart } = useCart();
-  const { success } = useToast();
+  const { addToCart, isAddingToCart } = useCartRQ();
+  const { success, error: showError } = useToast();
   const prefetchProduct = usePrefetchProduct();
   const prefetchServicio = usePrefetchServicio();
 
@@ -38,11 +38,19 @@ const Home = () => {
   }, []);
 
   const handleAddToCart = (item, type) => {
-    const added = addToCart(item, type);
-    if (added) {
-      const itemType = type === 'producto' ? 'Producto' : 'Servicio';
-      success(`${itemType} "${item.nombre}" agregado al carrito`);
-    }
+    const itemData = type === 'producto' 
+      ? { producto: item.id, cantidad: 1 }
+      : { servicio: item.id, cantidad: 1 };
+
+    addToCart(itemData, {
+      onSuccess: () => {
+        const itemType = type === 'producto' ? 'Producto' : 'Servicio';
+        success(`${itemType} "${item.nombre}" agregado al carrito`);
+      },
+      onError: (err) => {
+        showError(err.response?.data?.error || 'Error al agregar al carrito');
+      }
+    });
   };
 
   if (loading) {
@@ -122,13 +130,10 @@ const Home = () => {
                       </Link>
                       <button
                         onClick={() => handleAddToCart(producto, 'producto')}
-                        className={`btn-cart ${
-                          isInCart(producto.id, 'producto') ? 'in-cart' : ''
-                        }`}
+                        className="btn-cart"
+                        disabled={isAddingToCart}
                       >
-                        {isInCart(producto.id, 'producto')
-                          ? '✓ En carrito'
-                          : '🛒 Agregar'}
+                        {isAddingToCart ? 'Agregando...' : '🛒 Agregar'}
                       </button>
                     </div>
                   </div>
@@ -194,13 +199,10 @@ const Home = () => {
                   </Link>
                   <button
                     onClick={() => handleAddToCart(servicio, 'servicio')}
-                    className={`btn-cart ${
-                      isInCart(servicio.id, 'servicio') ? 'in-cart' : ''
-                    }`}
+                    className="btn-cart"
+                    disabled={isAddingToCart}
                   >
-                    {isInCart(servicio.id, 'servicio')
-                      ? '✓ En carrito'
-                      : '🛒 Solicitar'}
+                    {isAddingToCart ? 'Agregando...' : '🛒 Solicitar'}
                   </button>
                 </div>
               </div>
