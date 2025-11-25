@@ -4,6 +4,10 @@ import { productoService, categoriaService } from '../services';
 import { useCart } from '../contexts/CartContext';
 import './Productos.css';
 
+// En cualquier componente que muestre productos
+import { usePrefetchProduct } from '../hooks/useProducts'
+
+
 const Productos = () => {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -237,7 +241,9 @@ const Productos = () => {
 
                 <div className="productos-grid">
                   {productos.map((producto) => (
-                    <div key={producto.id} className="producto-card">
+                    <div key={producto.id} 
+                         className="producto-card"
+                         onMouseEnter={() => prefetchProduct(producto.id)}>
                       <Link to={`/productos/${producto.id}`} className="producto-image">
                         {producto.imagen_principal ? (
                           <img

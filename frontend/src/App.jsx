@@ -1,4 +1,14 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+import { useEffect } from 'react';  // GOOGLE ANALYTICS
+import { initGA, logPageView } from './lib/analytics'; // GOOGLE ANALYTICS
+
+// segunda parte
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { queryClient } from './lib/queryClient'
+
+
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { ToastProvider } from './components/Toast/Toast';
@@ -20,9 +30,23 @@ import Register from './pages/Register';
 import './App.css';
 
 function App() {
+
+
+  // -----------------------------------------
+  //   GOOGLE ANALYTICS: Inicialización global
+  // -----------------------------------------
+  useEffect(() => {
+    initGA();
+    logPageView();
+  }, []);
+  // -----------------------------------------
+
+
+
   return (
     <BrowserRouter>
       <AuthProvider>
+        <QueryClientProvider client={queryClient}>
         <CartProvider>
           <ToastProvider>
             <div className="app">
@@ -73,6 +97,8 @@ function App() {
           </div>
           </ToastProvider>
         </CartProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
       </AuthProvider>
     </BrowserRouter>
   );

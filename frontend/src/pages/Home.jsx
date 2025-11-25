@@ -74,7 +74,10 @@ const Home = () => {
 
           <div className="products-grid">
             {productosDestacados.map((producto) => (
-              <div key={producto.id} className="product-card">
+              <div key={producto.id} 
+                   className="product-card"
+                   onMouseEnter={() => prefetchProduct(producto.id)}>
+                   
                 <div className="product-image">
                   {producto.imagen_principal ? (
                     <img
