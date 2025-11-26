@@ -1,44 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { productoService } from '../services';
-import { useCart } from '../contexts/CartContext';
+import { useProductById } from '../hooks/useProducts';
+import { useCartRQ } from '../hooks/useCart';
+import { useToast } from '../components/Toast/Toast';
+import Recomendaciones from '../components/recomendaciones/Recomendaciones';
 import './ProductoDetalle.css';
 
 const ProductoDetalle = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [producto, setProducto] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { success, error: showError } = useToast();
+  
+  // Usar React Query para el producto
+  const { data: producto, isLoading: loading, error } = useProductById(id);
+  
+  // Usar React Query para el carrito
+  const { addToCart, isAddingToCart, cart } = useCartRQ();
+  
   const [imagenActual, setImagenActual] = useState(null);
   
-  const { addToCart, isInCart } = useCart();
-
-  useEffect(() => {
-    const fetchProducto = async () => {
-      try {
-        setLoading(true);
-        const data = await productoService.getById(id);
-        setProducto(data);
-        setImagenActual(data.imagen_principal);
-      } catch (err) {
-        console.error('Error al cargar producto:', err);
-        setError('No se pudo cargar el producto');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducto();
-  }, [id]);
+  // Actualizar imagen cuando carga el producto
+  useState(() => {
+    if (producto?.imagen_principal) {
+      setImagenActual(producto.imagen_principal);
+    }
+  }, [producto]);
 
   const handleAddToCart = () => {
-    addToCart(producto, 'producto');
+    addToCart(
+      { producto: parseInt(id), cantidad: 1 },
+      {
+        onSuccess: () => {
+          success(`${producto.nombre} agregado al carrito`);
+        },
+        onError: (err) => {
+          showError(err.response?.data?.error || 'Error al agregar al carrito');
+        },
+      }
+    );
   };
 
   const handleBuyNow = () => {
-    addToCart(producto, 'producto');
-    navigate('/carrito');
+    addToCart(
+      { producto: parseInt(id), cantidad: 1 },
+      {
+        onSuccess: () => {
+          navigate('/carrito');
+        },
+        onError: (err) => {
+          showError(err.response?.data?.error || 'Error al agregar al carrito');
+        },
+      }
+    );
   };
 
   if (loading) {
@@ -150,21 +163,17 @@ const ProductoDetalle = () => {
             <div className="producto-actions">
               {producto.stock > 0 ? (
                 <>
-                  {isInCart(producto.id, 'producto') ? (
-                    <button className="btn-cart added" disabled>
-                      ✓ En el Carrito
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn-cart"
-                      onClick={handleAddToCart}
-                    >
-                      🛒 Agregar al Carrito
-                    </button>
-                  )}
+                  <button 
+                    className="btn-cart"
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                  >
+                    {isAddingToCart ? 'Agregando...' : '🛒 Agregar al Carrito'}
+                  </button>
                   <button 
                     className="btn-buy"
                     onClick={handleBuyNow}
+                    disabled={isAddingToCart}
                   >
                     Comprar Ahora
                   </button>
@@ -217,6 +226,9 @@ const ProductoDetalle = () => {
             ← Volver a Productos
           </Link>
         </div>
+
+        {/* Recomendaciones */}
+        <Recomendaciones productoId={id} tipo="producto" />
       </div>
     </div>
   );

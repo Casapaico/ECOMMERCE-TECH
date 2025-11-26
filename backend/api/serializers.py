@@ -185,7 +185,7 @@ class CarritoSerializer(serializers.ModelSerializer):
 
 class PromocionSerializer(serializers.ModelSerializer):
     vigente = serializers.BooleanField(read_only=True, source='esta_vigente')
-    puede_usar = serializers.BooleanField(read_only=True, source='puede_usar')
+    puede_usar = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = Promocion
