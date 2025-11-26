@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useProductsByCategory } from '../hooks/useProducts'
 import { useCategoriaById } from '../hooks/useCategorias'
 import { usePrefetchProduct } from '../hooks/useProducts'
-import { useCart as useCartRQ } from '../hooks/useCart'
+import { useCartRQ } from '../hooks/useCart'
 import { useToast } from '../components/Toast/Toast'
 import './ProductosPorCategoria.css'
 
