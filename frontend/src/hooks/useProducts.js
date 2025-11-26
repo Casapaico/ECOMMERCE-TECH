@@ -5,8 +5,7 @@ export const useProducts = (params = {}) => {
   return useQuery({
     queryKey: ['productos', params],
     queryFn: async () => {
-      const response = await productoService.getAll(params)
-      return response.data
+      return await productoService.getAll(params)
     },
   })
 }
@@ -15,8 +14,7 @@ export const useProductById = (id) => {
   return useQuery({
     queryKey: ['producto', id],
     queryFn: async () => {
-      const response = await productoService.getById(id)
-      return response.data
+      return await productoService.getById(id)
     },
     enabled: !!id,
   })
@@ -30,8 +28,7 @@ export const usePrefetchProduct = () => {
     queryClient.prefetchQuery({
       queryKey: ['producto', id],
       queryFn: async () => {
-        const response = await productoService.getById(id)
-        return response.data
+        return await productoService.getById(id)
       },
       staleTime: 5 * 60 * 1000, // 5 minutos
     })
@@ -43,8 +40,7 @@ export const useProductsByCategory = (categoriaId) => {
   return useQuery({
     queryKey: ['productos', 'categoria', categoriaId],
     queryFn: async () => {
-      const response = await productoService.getAll({ categoria: categoriaId })
-      return response.data
+      return await productoService.getAll({ categoria: categoriaId })
     },
     enabled: !!categoriaId,
   })

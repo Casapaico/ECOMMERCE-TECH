@@ -87,8 +87,10 @@ const Carrito = () => {
 
   if (isLoading) {
     return (
-      <div className="carrito-container">
-        <div className="loading">Cargando carrito...</div>
+      <div className="carrito-page">
+        <div className="container">
+          <div className="loading">Cargando carrito...</div>
+        </div>
       </div>
     )
   }
@@ -118,7 +120,7 @@ const Carrito = () => {
       <div className="container">
         <div className="carrito-header">
           <h1>🛒 Mi Carrito</h1>
-          <button onClick={handleClearCart} className="btn-clear-cart">
+          <button onClick={handleClearCart} className="btn-clear">
             🗑️ Vaciar Carrito
           </button>
         </div>
@@ -127,74 +129,82 @@ const Carrito = () => {
           <div className="carrito-items">
             {cart.items.map((item) => {
               const detalle = item.producto_detalle || item.servicio_detalle
-              const tipo = detalle?.tipo
+              const tipo = item.producto ? 'producto' : 'servicio'
 
               return (
                 <div key={item.id} className="carrito-item">
-                  <div className="carrito-item-imagen">
-                    {detalle?.imagen ? (
-                      <img src={detalle.imagen} alt={detalle.nombre} />
+                  <div className="item-image">
+                    {detalle?.imagen_principal ? (
+                      <img 
+                        src={`http://localhost:8000${detalle.imagen_principal}`} 
+                        alt={detalle.nombre} 
+                      />
                     ) : (
-                      <div className="imagen-placeholder">
+                      <div className="no-image">
                         {tipo === 'producto' ? '📦' : '🛠️'}
                       </div>
                     )}
                   </div>
 
-                  <div className="carrito-item-info">
-                    <h3>{detalle?.nombre || 'Cargando...'}</h3>
-                    <span className="carrito-item-tipo">
+                  <div className="item-info">
+                    <div className="item-type">
                       {tipo === 'producto' ? '📦 Producto' : '🛠️ Servicio'}
-                    </span>
+                    </div>
+                    <h3 className="item-name">{detalle?.nombre || 'Cargando...'}</h3>
+                    
                     {item.producto_detalle && (
-                      <p className="carrito-item-meta">
-                        Stock: {item.producto_detalle.stock} | 
-                        Licencia: {item.producto_detalle.tipo_licencia}
+                      <p className="item-description">
+                        <span className="item-license">
+                          Licencia: {item.producto_detalle.tipo_licencia}
+                        </span>
                       </p>
                     )}
                     {item.servicio_detalle && (
-                      <p className="carrito-item-meta">
-                        ⏱️ Tiempo estimado: {item.servicio_detalle.tiempo_estimado} días
+                      <p className="item-description">
+                        <span className="item-time">
+                          ⏱️ Tiempo estimado: {item.servicio_detalle.tiempo_estimado_dias} días
+                        </span>
                       </p>
                     )}
                   </div>
 
-                  <div className="carrito-item-cantidad">
-                    <button
-                      onClick={() => handleUpdateQuantity(item.id, item.cantidad - 1)}
-                      disabled={item.cantidad <= 1 || isUpdating}
-                      className="btn-cantidad"
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={item.cantidad}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value)
-                        if (val > 0) handleUpdateQuantity(item.id, val)
-                      }}
-                      min="1"
-                      disabled={isUpdating}
-                    />
-                    <button
-                      onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
-                      disabled={isUpdating}
-                      className="btn-cantidad"
-                    >
-                      +
-                    </button>
+                  <div className="item-quantity">
+                    <label>Cantidad</label>
+                    <div className="quantity-controls">
+                      <button
+                        onClick={() => handleUpdateQuantity(item.id, item.cantidad - 1)}
+                        disabled={item.cantidad <= 1 || isUpdating}
+                      >
+                        −
+                      </button>
+                      <input
+                        type="number"
+                        value={item.cantidad}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value)
+                          if (val > 0) handleUpdateQuantity(item.id, val)
+                        }}
+                        min="1"
+                        disabled={isUpdating}
+                      />
+                      <button
+                        onClick={() => handleUpdateQuantity(item.id, item.cantidad + 1)}
+                        disabled={isUpdating}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="carrito-item-precio">
-                    <p className="precio-unitario">${item.precio_unitario}</p>
-                    <p className="subtotal">${item.subtotal}</p>
+                  <div className="item-price">
+                    <div className="price-unit">${item.precio_unitario} c/u</div>
+                    <div className="price-total">${item.subtotal}</div>
                   </div>
 
                   <button
                     onClick={() => handleRemoveItem(item.id)}
                     disabled={isRemoving}
-                    className="btn-eliminar"
+                    className="btn-remove"
                     title="Eliminar"
                   >
                     ✕
@@ -204,81 +214,77 @@ const Carrito = () => {
             })}
           </div>
 
-          <div className="carrito-resumen">
-            <div className="resumen-card">
-              <h2>Resumen del Pedido</h2>
-              
-              <div className="resumen-linea">
-                <span>Items:</span>
-                <span>{cart.total_items}</span>
-              </div>
+          <div className="carrito-summary">
+            <h2>Resumen del Pedido</h2>
+            
+            <div className="summary-line">
+              <span>Items:</span>
+              <span>{cart.total_items}</span>
+            </div>
 
-              <div className="resumen-linea">
-                <span>Subtotal:</span>
-                <span>${cart.total}</span>
-              </div>
+            <div className="summary-line">
+              <span>Subtotal:</span>
+              <span>${cart.total}</span>
+            </div>
 
-              {/* Componente de Promoción */}
-              <PromocionInput 
-                onPromocionAplicada={setPromocion} 
-                totalCarrito={cart.total || 0}
-              />
+            {/* Componente de Promoción */}
+            <PromocionInput 
+              onPromocionAplicada={setPromocion} 
+              totalCarrito={cart.total || 0}
+            />
 
-              {promocion && descuento > 0 && (
-                <>
-                  {parseFloat(cart.total) < parseFloat(promocion.monto_minimo) ? (
-                    <div className="promocion-advertencia">
-                      ⚠️ Monto mínimo: ${promocion.monto_minimo}
-                    </div>
-                  ) : (
-                    <div className="resumen-linea descuento">
-                      <span>🎉 Descuento ({promocion.codigo}):</span>
-                      <span className="descuento-valor">-${descuento}</span>
-                    </div>
-                  )}
-                </>
-              )}
+            {promocion && descuento > 0 && (
+              <>
+                {parseFloat(cart.total) < parseFloat(promocion.monto_minimo) ? (
+                  <div className="promocion-advertencia">
+                    ⚠️ Monto mínimo: ${promocion.monto_minimo}
+                  </div>
+                ) : (
+                  <div className="summary-line">
+                    <span>🎉 Descuento ({promocion.codigo}):</span>
+                    <span style={{ color: '#28a745', fontWeight: 'bold' }}>
+                      -${descuento}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
 
-              <div className="resumen-linea total">
-                <span>Total:</span>
-                <span>${promocion && descuento > 0 && parseFloat(cart.total) >= parseFloat(promocion.monto_minimo) ? totalConDescuento : cart.total}</span>
-              </div>
+            <div className="summary-line highlight">
+              <span>Total:</span>
+              <span className="total-price">
+                ${promocion && descuento > 0 && parseFloat(cart.total) >= parseFloat(promocion.monto_minimo) ? totalConDescuento : cart.total}
+              </span>
+            </div>
 
-              <button className="btn btn-primary btn-block btn-checkout" disabled>
+            <div className="summary-actions">
+              <button className="btn-checkout" disabled>
                 💳 Proceder al Pago
-                <br />
-                <small>(Próximamente)</small>
               </button>
+              <p className="checkout-note">(Próximamente)</p>
+            </div>
 
-              <Link to="/productos" className="btn btn-secondary-outline btn-block">
+            <div className="continue-shopping">
+              <Link to="/productos" className="link">
                 ← Continuar Comprando
               </Link>
             </div>
+          </div>
+        </div>
 
-            <div className="info-boxes">
-              <div className="info-box">
-                <span>🔒</span>
-                <p>Compra Segura</p>
-              </div>
-              <div className="info-box">
-                <span>💳</span>
-                <p>Múltiples Métodos de Pago</p>
-              </div>
-              <div className="info-box">
-                <span>📞</span>
-                <p>Soporte 24/7</p>
-              </div>
-            </div>
-
-            {/* Códigos de promoción disponibles */}
-            <div className="promociones-disponibles">
-              <h3>🎁 Promociones Disponibles</h3>
-              <ul>
-                <li><strong>BLACKFRIDAY2024</strong> - 25% desc. (Min. $1000)</li>
-                <li><strong>NUEVO2024</strong> - 15% desc. (Min. $500)</li>
-                <li><strong>AHORRA200</strong> - $200 desc. (Min. $3000)</li>
-              </ul>
-            </div>
+        {/* Info boxes */}
+        <div className="carrito-info">
+          <div className="info-box">
+            <h3>🔒 Compra Segura</h3>
+            <p>Tus datos están protegidos</p>
+          </div>
+          <div className="info-box">
+            <h3>💳 Múltiples Métodos</h3>
+            <p>Acepta todas las tarjetas</p>
+          </div>
+          <div className="info-box">
+            <h3>📞 Soporte 24/7</h3>
+            <p>Estamos para ayudarte</p>
           </div>
         </div>
 

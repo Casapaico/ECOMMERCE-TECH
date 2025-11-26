@@ -5,8 +5,7 @@ export const useCategorias = () => {
   return useQuery({
     queryKey: ['categorias'],
     queryFn: async () => {
-      const response = await categoriaService.getAll()
-      return response.data
+      return await categoriaService.getAll()
     },
     staleTime: 10 * 60 * 1000, // 10 minutos (categorías no cambian mucho)
   })
@@ -16,8 +15,7 @@ export const useCategoriaById = (id) => {
   return useQuery({
     queryKey: ['categoria', id],
     queryFn: async () => {
-      const response = await categoriaService.getById(id)
-      return response.data
+      return await categoriaService.getById(id)
     },
     enabled: !!id,
   })
@@ -31,8 +29,7 @@ export const usePrefetchCategoria = () => {
     queryClient.prefetchQuery({
       queryKey: ['productos', 'categoria', id],
       queryFn: async () => {
-        const response = await categoriaService.getById(id)
-        return response.data
+        return await categoriaService.getById(id)
       },
       staleTime: 5 * 60 * 1000,
     })
