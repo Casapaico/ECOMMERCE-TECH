@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAnalytics } from '../hooks/useAnalytics';
 import './Login.css';
 
 const Login = () => {
@@ -12,6 +13,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
+  const { userLogin } = useAnalytics();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -38,6 +40,9 @@ const Login = () => {
       const result = await login(formData);
 
       if (result.success) {
+        // Trackear login exitoso
+        userLogin('email');
+        
         // Redirigir al home o a la página anterior
         navigate('/');
       } else {

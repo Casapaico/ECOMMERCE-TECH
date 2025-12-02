@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useProductById } from '../hooks/useProducts';
 import { useCartRQ } from '../hooks/useCart';
 import { useToast } from '../components/Toast/Toast';
+import { useAnalytics } from '../hooks/useAnalytics';
 import Recomendaciones from '../components/recomendaciones/Recomendaciones';
 import './ProductoDetalle.css';
 
@@ -17,20 +18,44 @@ const ProductoDetalle = () => {
   // Usar React Query para el carrito
   const { addToCart, isAddingToCart, cart } = useCartRQ();
   
+  // Hook de Analytics
+  const { viewProduct, addToCart: trackAddToCart } = useAnalytics();
+  
   const [imagenActual, setImagenActual] = useState(null);
   
   // Actualizar imagen cuando carga el producto
-  useState(() => {
+  useEffect(() => {
     if (producto?.imagen_principal) {
       setImagenActual(producto.imagen_principal);
     }
   }, [producto]);
+
+  // Trackear cuando se ve el producto
+  useEffect(() => {
+    if (producto) {
+      viewProduct(
+        producto.id,
+        producto.nombre,
+        producto.categoria_nombre || 'Sin categoría',
+        parseFloat(producto.precio)
+      );
+    }
+  }, [producto, viewProduct]);
 
   const handleAddToCart = () => {
     addToCart(
       { producto: parseInt(id), cantidad: 1 },
       {
         onSuccess: () => {
+          // Trackear agregado al carrito
+          trackAddToCart(
+            producto.id,
+            producto.nombre,
+            producto.categoria_nombre || 'Sin categoría',
+            parseFloat(producto.precio),
+            1
+          );
+          
           success(`${producto.nombre} agregado al carrito`);
         },
         onError: (err) => {
@@ -45,6 +70,15 @@ const ProductoDetalle = () => {
       { producto: parseInt(id), cantidad: 1 },
       {
         onSuccess: () => {
+          // Trackear agregado al carrito
+          trackAddToCart(
+            producto.id,
+            producto.nombre,
+            producto.categoria_nombre || 'Sin categoría',
+            parseFloat(producto.precio),
+            1
+          );
+          
           navigate('/carrito');
         },
         onError: (err) => {

@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCartRQ } from '../hooks/useCart'
 import { useToast } from '../components/Toast/Toast'
+import { useAnalytics } from '../hooks/useAnalytics'
 import PromocionInput from '../components/promociones/PromocionInput'
 import Recomendaciones from '../components/recomendaciones/Recomendaciones'
 import './Carrito.css'
@@ -19,7 +20,24 @@ const Carrito = () => {
     isRemoving,
   } = useCartRQ()
 
+  // Hook de Analytics
+  const {
+    viewCart,
+    removeFromCart: trackRemoveFromCart,
+    beginCheckout
+  } = useAnalytics()
+
   const [promocion, setPromocion] = useState(null)
+
+  // Trackear cuando se ve el carrito
+  useEffect(() => {
+    if (cart && cart.items && cart.items.length > 0) {
+      viewCart(
+        parseFloat(cart.total),
+        cart.total_items
+      );
+    }
+  }, [cart, viewCart]);
 
   // Calcular descuento
   const calcularDescuento = () => {
@@ -61,8 +79,23 @@ const Carrito = () => {
   const handleRemoveItem = (itemId) => {
     if (!window.confirm('¿Eliminar este item del carrito?')) return
 
+    // Encontrar el item antes de eliminarlo
+    const item = cart.items.find(i => i.id === itemId)
+    const detalle = item?.producto_detalle || item?.servicio_detalle
+
     removeItem(itemId, {
       onSuccess: () => {
+        // Trackear eliminación
+        if (detalle) {
+          trackRemoveFromCart(
+            item.id,
+            detalle.nombre,
+            detalle.categoria_nombre || 'Sin categoría',
+            parseFloat(item.precio_unitario),
+            item.cantidad
+          );
+        }
+        
         success('Item eliminado del carrito')
       },
       onError: (err) => {
