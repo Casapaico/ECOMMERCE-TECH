@@ -1,6 +1,9 @@
 from django.contrib import admin
-from .models import (Categoria, Producto, Servicio, Perfil, 
-                     Carrito, ItemCarrito, Promocion, Recomendacion, EventoUsuario) # Nuevos modelos para semana actual
+from .models import (
+    Categoria, Producto, Servicio, Perfil, 
+    Carrito, ItemCarrito, Promocion, Recomendacion, EventoUsuario,
+    Pedido, ItemPedido
+)
 
 
 @admin.register(Categoria)
@@ -83,7 +86,6 @@ class PerfilAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'user__email', 'empresa']
     readonly_fields = ['fecha_creacion']
 
-# CAMBIOS A PARTIR DE AQUÍ========================================================================================
 
 # ============ NUEVOS ADMINS PARA SEMANA ACTUAL ============
 
@@ -203,4 +205,61 @@ class EventoUsuarioAdmin(admin.ModelAdmin):
         return obj.producto or obj.servicio
     get_item.short_description = 'Item'
 
-# FIN CAMBIOS ========================================================================================
+
+# ============ PEDIDOS (HISTORIAL DE COMPRAS) ============
+
+class ItemPedidoInline(admin.TabularInline):
+    model = ItemPedido
+    extra = 0
+    readonly_fields = ['nombre_item', 'descripcion_item', 'precio_unitario', 'subtotal', 'tipo_item']
+    fields = ['producto', 'servicio', 'nombre_item', 'cantidad', 'precio_unitario', 'subtotal']
+    can_delete = False
+
+
+@admin.register(Pedido)
+class PedidoAdmin(admin.ModelAdmin):
+    list_display = [
+        'numero_orden', 'user', 'total', 'metodo_pago', 
+        'estado', 'fecha_pedido', 'get_total_items'
+    ]
+    list_filter = ['estado', 'metodo_pago', 'fecha_pedido']
+    search_fields = ['numero_orden', 'user__username', 'user__email', 'stripe_payment_intent']
+    readonly_fields = [
+        'numero_orden', 'fecha_pedido', 'fecha_completado', 'fecha_cancelado'
+    ]
+    list_per_page = 25
+    inlines = [ItemPedidoInline]
+    
+    fieldsets = (
+        ('Información del Pedido', {
+            'fields': ('numero_orden', 'user', 'estado')
+        }),
+        ('Montos', {
+            'fields': ('subtotal', 'descuento', 'total', 'codigo_promocion')
+        }),
+        ('Pago', {
+            'fields': ('metodo_pago', 'stripe_payment_intent', 'stripe_charge_id')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_pedido', 'fecha_completado', 'fecha_cancelado')
+        }),
+        ('Información Adicional', {
+            'fields': ('direccion_envio', 'notas'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_total_items(self, obj):
+        return obj.items.count()
+    get_total_items.short_description = 'Items'
+
+
+@admin.register(ItemPedido)
+class ItemPedidoAdmin(admin.ModelAdmin):
+    list_display = [
+        'pedido', 'nombre_item', 'tipo_item', 
+        'cantidad', 'precio_unitario', 'subtotal'
+    ]
+    list_filter = ['tipo_item', 'pedido__estado']
+    search_fields = ['pedido__numero_orden', 'nombre_item', 'descripcion_item']
+    readonly_fields = ['nombre_item', 'descripcion_item', 'precio_unitario', 'subtotal', 'tipo_item']

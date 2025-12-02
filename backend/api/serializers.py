@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Categoria, Producto, Servicio, Perfil
+from .models import (
+    Categoria, Producto, Servicio, Perfil, Pedido, ItemPedido
+)
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
@@ -108,8 +110,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         Perfil.objects.create(user=user)
         return user
 
-# CAMBIOS A PARTIR DE AQUÍ========================================================================================
-
 
 # ============ NUEVOS SERIALIZERS PARA SEMANA ACTUAL ============
 
@@ -185,7 +185,7 @@ class CarritoSerializer(serializers.ModelSerializer):
 
 class PromocionSerializer(serializers.ModelSerializer):
     vigente = serializers.BooleanField(read_only=True, source='esta_vigente')
-    puede_usar = serializers.BooleanField(read_only=True)
+    puede_usar = serializers.BooleanField(read_only=True, source='puede_usar')
     
     class Meta:
         model = Promocion
@@ -234,4 +234,70 @@ class EventoUsuarioSerializer(serializers.ModelSerializer):
         fields = ['tipo_evento', 'producto', 'servicio', 'metadata']
         read_only_fields = ['fecha_evento']
 
-# FIN CAMBIOS ========================================================================================
+
+# Serializers para Pedidos
+class ItemPedidoSerializer(serializers.ModelSerializer):
+    """Serializer para items individuales de un pedido"""
+    class Meta:
+        model = ItemPedido
+        fields = [
+            'id', 'producto', 'servicio', 'nombre_item', 'descripcion_item',
+            'precio_unitario', 'cantidad', 'subtotal', 'tipo_item'
+        ]
+        read_only_fields = ['nombre_item', 'descripcion_item', 'precio_unitario', 'subtotal', 'tipo_item']
+
+
+class PedidoSerializer(serializers.ModelSerializer):
+    """Serializer completo para pedidos (con items)"""
+    items = ItemPedidoSerializer(many=True, read_only=True)
+    user_nombre = serializers.CharField(source='user.username', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    metodo_pago_display = serializers.CharField(source='get_metodo_pago_display', read_only=True)
+    
+    class Meta:
+        model = Pedido
+        fields = [
+            'id', 'numero_orden', 'user', 'user_nombre',
+            'subtotal', 'descuento', 'total',
+            'metodo_pago', 'metodo_pago_display',
+            'stripe_payment_intent', 'stripe_charge_id',
+            'codigo_promocion',
+            'estado', 'estado_display',
+            'fecha_pedido', 'fecha_completado', 'fecha_cancelado',
+            'notas', 'direccion_envio',
+            'items'
+        ]
+        read_only_fields = [
+            'numero_orden', 'fecha_pedido', 'fecha_completado', 'fecha_cancelado'
+        ]
+
+
+class PedidoListSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para listado de pedidos"""
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    metodo_pago_display = serializers.CharField(source='get_metodo_pago_display', read_only=True)
+    total_items = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Pedido
+        fields = [
+            'id', 'numero_orden',
+            'total', 'estado', 'estado_display',
+            'metodo_pago_display',
+            'fecha_pedido',
+            'total_items'
+        ]
+    
+    def get_total_items(self, obj):
+        return obj.items.count()
+
+
+class CrearPedidoSerializer(serializers.Serializer):
+    """Serializer para crear un pedido desde el carrito"""
+    metodo_pago = serializers.ChoiceField(
+        choices=['tarjeta', 'google_pay', 'apple_pay', 'paypal']
+    )
+    stripe_payment_intent = serializers.CharField(required=False, allow_blank=True)
+    codigo_promocion = serializers.CharField(required=False, allow_blank=True)
+    direccion_envio = serializers.CharField(required=False, allow_blank=True)
+    notas = serializers.CharField(required=False, allow_blank=True)

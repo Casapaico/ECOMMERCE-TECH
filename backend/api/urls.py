@@ -7,6 +7,7 @@ from .views import (
     # Nuevos viewsets para semana actual
     CarritoViewSet, PromocionViewSet, RecomendacionViewSet, EventoUsuarioViewSet
 )
+from .views_pedidos import PedidoViewSet
 
 # Router para los ViewSets
 router = DefaultRouter()
@@ -20,6 +21,9 @@ router.register(r'carrito', CarritoViewSet, basename='carrito')
 router.register(r'promociones', PromocionViewSet, basename='promocion')
 router.register(r'recomendaciones', RecomendacionViewSet, basename='recomendacion')
 router.register(r'eventos', EventoUsuarioViewSet, basename='evento')
+
+# Pedidos (Historial de compras)
+router.register(r'pedidos', PedidoViewSet, basename='pedido')
 
 urlpatterns = [
     # Router URLs
